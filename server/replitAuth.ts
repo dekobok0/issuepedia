@@ -58,12 +58,25 @@ function updateUserSession(
 async function upsertUser(
   claims: any,
 ) {
+  // Generate a username from email or use sub as fallback
+  let username = claims["email"]?.split('@')[0] || `user${claims["sub"]}`;
+  
+  // Check if username exists and add suffix if needed
+  let existingUser = await storage.getUserByUsername(username);
+  let suffix = 1;
+  while (existingUser && existingUser.id !== claims["sub"]) {
+    username = `${claims["email"]?.split('@')[0] || `user${claims["sub"]}`}${suffix}`;
+    existingUser = await storage.getUserByUsername(username);
+    suffix++;
+  }
+  
   await storage.upsertUser({
     id: claims["sub"],
     email: claims["email"],
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
+    username,
   });
 }
 

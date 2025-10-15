@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUp, ArrowDown, MessageSquare, Plus } from "lucide-react";
 import { Link } from "wouter";
-import { getQueryFn } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 import type { Prompt } from "@shared/schema";
 
 export default function Home() {
@@ -13,10 +13,7 @@ export default function Home() {
     queryKey: ["/api/v1/prompts"],
   });
 
-  const { data: user } = useQuery({
-    queryKey: ["/api/auth/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-  });
+  const { user } = useAuth();
 
   if (isLoading) {
     return (

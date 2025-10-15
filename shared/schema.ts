@@ -29,7 +29,7 @@ export const sessions = pgTable(
 // Users table - Required for Replit Auth with reputation field for gamification
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  email: varchar("email", { length: 255 }).unique().notNull(),
+  email: varchar("email", { length: 255 }).unique(), // Nullable - some login methods don't provide email
   firstName: varchar("first_name", { length: 100 }),
   lastName: varchar("last_name", { length: 100 }),
   profileImageUrl: varchar("profile_image_url", { length: 500 }),

@@ -1,6 +1,5 @@
 import { Home, Plus, User, Library, Award } from "lucide-react";
 import { Link, useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
 import {
   Sidebar,
   SidebarContent,
@@ -14,7 +13,7 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { getQueryFn } from "@/lib/queryClient";
+import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
   {
@@ -43,20 +42,9 @@ const menuItems = [
   },
 ];
 
-type User = {
-  id: string;
-  username: string;
-  email: string;
-  profileImageUrl?: string;
-  reputation?: number;
-};
-
 export function AppSidebar() {
   const [location] = useLocation();
-  const { data: user } = useQuery<User | null>({
-    queryKey: ["/api/auth/user"],
-    queryFn: getQueryFn({ on401: "returnNull" }),
-  });
+  const { user } = useAuth();
 
   return (
     <Sidebar>
@@ -112,7 +100,7 @@ export function AppSidebar() {
           </Link>
         ) : (
           <a
-            href="/api/auth/login"
+            href="/api/login"
             className="flex items-center gap-2 hover-elevate rounded-lg p-2"
             data-testid="link-login"
           >
