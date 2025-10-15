@@ -47,12 +47,12 @@ export default function Home() {
           </p>
         </div>
         {user && (
-          <Link to="/create">
-            <Button data-testid="button-create-prompt">
+          <Button asChild data-testid="button-create-prompt">
+            <Link to="/create">
               <Plus className="h-4 w-4 mr-2" />
               Create Prompt
-            </Button>
-          </Link>
+            </Link>
+          </Button>
         )}
       </div>
 
@@ -63,12 +63,12 @@ export default function Home() {
               No prompts yet. Be the first to contribute!
             </p>
             {user && (
-              <Link to="/create">
-                <Button data-testid="button-create-first-prompt">
+              <Button asChild data-testid="button-create-first-prompt">
+                <Link to="/create">
                   <Plus className="h-4 w-4 mr-2" />
                   Create the First Prompt
-                </Button>
-              </Link>
+                </Link>
+              </Button>
             )}
           </CardContent>
         </Card>
