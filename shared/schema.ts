@@ -327,3 +327,6 @@ export type InsertPromptTechnique = z.infer<typeof insertPromptTechniqueSchema>;
 
 export type PromptTechniqueLink = typeof promptTechniqueLinks.$inferSelect;
 export type UserBadge = typeof userBadges.$inferSelect;
+
+// Extended types for joined queries
+export type PromptWithTechniques = Prompt & { techniques: PromptTechnique[] };

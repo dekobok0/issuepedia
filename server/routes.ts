@@ -39,7 +39,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/v1/prompts', async (req, res) => {
     try {
       const { status, authorId, limit, offset } = req.query;
-      const prompts = await storage.getPrompts({
+      const prompts = await storage.getPromptsWithTechniques({
         status: status as string,
         authorId: authorId as string,
         limit: limit ? parseInt(limit as string) : undefined,

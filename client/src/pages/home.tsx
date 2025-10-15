@@ -6,10 +6,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { ArrowUp, ArrowDown, MessageSquare, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import type { Prompt } from "@shared/schema";
+import type { PromptWithTechniques } from "@shared/schema";
 
 export default function Home() {
-  const { data: prompts, isLoading } = useQuery<Prompt[]>({
+  const { data: prompts, isLoading } = useQuery<PromptWithTechniques[]>({
     queryKey: ["/api/v1/prompts"],
   });
 
@@ -102,10 +102,24 @@ export default function Home() {
                   </Badge>
                 </div>
               </CardHeader>
-              <CardContent>
+              <CardContent className="space-y-3">
                 <p className="text-sm text-muted-foreground line-clamp-2 font-mono" data-testid={`text-prompt-body-${prompt.id}`}>
                   {prompt.promptBodyText}
                 </p>
+                {prompt.techniques && prompt.techniques.length > 0 && (
+                  <div className="flex flex-wrap gap-2" data-testid={`techniques-list-${prompt.id}`}>
+                    {prompt.techniques.map((technique) => (
+                      <Badge 
+                        key={technique.id} 
+                        variant="outline" 
+                        className="text-xs"
+                        data-testid={`badge-technique-${technique.id}-${prompt.id}`}
+                      >
+                        {technique.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
               </CardContent>
               <CardFooter className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">

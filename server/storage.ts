@@ -44,6 +44,7 @@ export interface IStorage {
   createPrompt(prompt: InsertPrompt): Promise<Prompt>;
   getPrompt(id: string): Promise<Prompt | undefined>;
   getPrompts(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<Prompt[]>;
+  getPromptsWithTechniques(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<(Prompt & { techniques: PromptTechnique[] })[]>;
   updatePrompt(id: string, data: Partial<InsertPrompt>): Promise<Prompt | undefined>;
   forkPrompt(promptId: string, authorId: string): Promise<Prompt>;
   
@@ -158,6 +159,43 @@ export class DatabaseStorage implements IStorage {
     }
     
     return await query;
+  }
+
+  async getPromptsWithTechniques(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<(Prompt & { techniques: PromptTechnique[] })[]> {
+    // First, get the filtered prompts
+    const filteredPrompts = await this.getPrompts(filters);
+    
+    if (filteredPrompts.length === 0) {
+      return [];
+    }
+    
+    // Get prompt IDs
+    const promptIds = filteredPrompts.map(p => p.id);
+    
+    // Get all technique links for these prompts
+    const techniquesData = await db
+      .select({
+        promptId: promptTechniqueLinks.promptId,
+        technique: promptTechniques,
+      })
+      .from(promptTechniqueLinks)
+      .innerJoin(promptTechniques, eq(promptTechniqueLinks.techniqueId, promptTechniques.id))
+      .where(inArray(promptTechniqueLinks.promptId, promptIds));
+    
+    // Group techniques by prompt
+    const techniquesByPrompt = new Map<string, PromptTechnique[]>();
+    for (const { promptId, technique } of techniquesData) {
+      if (!techniquesByPrompt.has(promptId)) {
+        techniquesByPrompt.set(promptId, []);
+      }
+      techniquesByPrompt.get(promptId)!.push(technique);
+    }
+    
+    // Combine prompts with their techniques
+    return filteredPrompts.map(prompt => ({
+      ...prompt,
+      techniques: techniquesByPrompt.get(prompt.id) || [],
+    }));
   }
 
   async updatePrompt(id: string, data: Partial<InsertPrompt>): Promise<Prompt | undefined> {
