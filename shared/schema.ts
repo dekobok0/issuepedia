@@ -278,7 +278,6 @@ export const insertCommentSchema = createInsertSchema(comments).omit({
 });
 
 export const insertVoteSchema = createInsertSchema(votes).omit({
-  id: true,
   createdAt: true,
 }).extend({
   voteType: z.enum(['upvote', 'downvote']),
