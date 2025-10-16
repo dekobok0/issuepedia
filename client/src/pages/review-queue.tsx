@@ -41,7 +41,8 @@ export default function ReviewQueue() {
 
   const reviewMutation = useMutation({
     mutationFn: async ({ promptId, vote }: { promptId: string; vote: 'approve' | 'reject' }) => {
-      return await apiRequest('POST', '/api/v1/reviews', { promptId, vote });
+      const res = await apiRequest('POST', '/api/v1/reviews', { promptId, vote });
+      return await res.json();
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ['/api/v1/reviews/queue'] });
