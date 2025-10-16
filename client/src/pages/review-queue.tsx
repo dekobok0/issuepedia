@@ -1,12 +1,13 @@
 import { useEffect } from "react";
 import { useLocation } from "wouter";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { AlertCircle, CheckCircle, XCircle } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import type { Prompt } from "@shared/schema";
 
 export default function ReviewQueue() {
@@ -36,6 +37,26 @@ export default function ReviewQueue() {
   const { data: prompts = [], isLoading, error } = useQuery<Prompt[]>({
     queryKey: ['/api/v1/reviews/queue'],
     enabled: !!user && user.reputation >= 500,
+  });
+
+  const reviewMutation = useMutation({
+    mutationFn: async ({ promptId, vote }: { promptId: string; vote: 'approve' | 'reject' }) => {
+      return await apiRequest('POST', '/api/v1/reviews', { promptId, vote });
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ['/api/v1/reviews/queue'] });
+      toast({
+        title: variables.vote === 'approve' ? "Prompt approved" : "Prompt rejected",
+        description: `The prompt has been ${variables.vote === 'approve' ? 'approved' : 'rejected'}.`,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Review failed",
+        description: error.message || "Failed to submit review. Please try again.",
+        variant: "destructive",
+      });
+    },
   });
 
   // Show loading state while checking auth
@@ -143,15 +164,26 @@ export default function ReviewQueue() {
                 )}
               </CardContent>
 
-              <CardFooter className="flex gap-2">
+              <CardFooter className="flex gap-2 flex-wrap">
                 <Button
                   variant="default"
                   size="sm"
-                  onClick={() => navigate(`/prompts/${prompt.id}/review`)}
-                  data-testid={`button-review-${prompt.id}`}
+                  onClick={() => reviewMutation.mutate({ promptId: prompt.id, vote: 'approve' })}
+                  disabled={reviewMutation.isPending}
+                  data-testid={`button-approve-${prompt.id}`}
                 >
                   <CheckCircle className="h-4 w-4 mr-2" />
-                  Review
+                  Approve
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={() => reviewMutation.mutate({ promptId: prompt.id, vote: 'reject' })}
+                  disabled={reviewMutation.isPending}
+                  data-testid={`button-reject-${prompt.id}`}
+                >
+                  <XCircle className="h-4 w-4 mr-2" />
+                  Reject
                 </Button>
                 <Button
                   variant="outline"
