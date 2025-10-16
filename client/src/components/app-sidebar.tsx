@@ -1,4 +1,4 @@
-import { Home, Plus, User, Library, Award } from "lucide-react";
+import { Home, Plus, User, Library, Award, CheckSquare } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -29,6 +29,13 @@ const menuItems = [
     testId: "link-create",
   },
   {
+    title: "Review Queue",
+    url: "/review-queue",
+    icon: CheckSquare,
+    testId: "link-review-queue",
+    requiresReputation: 500,
+  },
+  {
     title: "Techniques",
     url: "/techniques",
     icon: Library,
@@ -45,6 +52,14 @@ const menuItems = [
 export function AppSidebar() {
   const [location] = useLocation();
   const { user } = useAuth();
+
+  // Add Review Queue for users with 500+ reputation
+  const visibleMenuItems = menuItems.filter((item) => {
+    if (item.requiresReputation && (!user || user.reputation < item.requiresReputation)) {
+      return false;
+    }
+    return true;
+  });
 
   return (
     <Sidebar>
@@ -66,7 +81,7 @@ export function AppSidebar() {
           <SidebarGroupLabel>Navigation</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
-              {menuItems.map((item) => (
+              {visibleMenuItems.map((item) => (
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton asChild isActive={location === item.url}>
                     <Link to={item.url} data-testid={item.testId}>
@@ -84,7 +99,7 @@ export function AppSidebar() {
         {user ? (
           <Link to="/profile" className="flex items-center gap-3 hover-elevate rounded-lg p-2" data-testid="link-profile">
             <Avatar className="h-8 w-8">
-              <AvatarImage src={user.profileImageUrl} />
+              <AvatarImage src={user.profileImageUrl || undefined} />
               <AvatarFallback>
                 {user.username?.substring(0, 2).toUpperCase()}
               </AvatarFallback>

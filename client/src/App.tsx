@@ -9,6 +9,7 @@ import { ThemeToggle } from "@/components/theme-toggle";
 import { AppSidebar } from "@/components/app-sidebar";
 import Home from "@/pages/home";
 import CreatePrompt from "@/pages/create-prompt";
+import ReviewQueue from "@/pages/review-queue";
 import Techniques from "@/pages/techniques";
 import Leaderboard from "@/pages/leaderboard";
 import Profile from "@/pages/profile";
@@ -20,6 +21,7 @@ function Router() {
     <Switch>
       <Route path="/" component={Home} />
       <Route path="/create" component={CreatePrompt} />
+      <Route path="/review-queue" component={ReviewQueue} />
       <Route path="/techniques" component={Techniques} />
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/profile" component={Profile} />

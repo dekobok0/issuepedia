@@ -120,11 +120,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const user = await storage.getUser(req.user.claims.sub);
       
+      // Access control: Only users with 500+ reputation can access review queue
       if (!user || user.reputation < 500) {
         return res.status(403).json({ message: "Insufficient reputation to access review queue" });
       }
       
-      const queue = await storage.getReviewQueue(500);
+      const queue = await storage.getReviewQueue();
       res.json(queue);
     } catch (error) {
       console.error("Error fetching review queue:", error);

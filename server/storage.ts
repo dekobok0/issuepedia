@@ -51,7 +51,7 @@ export interface IStorage {
   // Review operations
   createReview(review: InsertReview): Promise<Review>;
   getReviewsByPromptId(promptId: string): Promise<Review[]>;
-  getReviewQueue(minReputation: number): Promise<Prompt[]>;
+  getReviewQueue(): Promise<Prompt[]>;
   
   // Vote operations
   createVote(vote: InsertVote): Promise<Vote>;
@@ -242,7 +242,9 @@ export class DatabaseStorage implements IStorage {
     return await db.select().from(reviews).where(eq(reviews.promptId, promptId));
   }
 
-  async getReviewQueue(minReputation: number = 500): Promise<Prompt[]> {
+  async getReviewQueue(): Promise<Prompt[]> {
+    // Returns all pending_review prompts
+    // Access control (reputation check) is enforced in routes.ts
     return await db
       .select()
       .from(prompts)
