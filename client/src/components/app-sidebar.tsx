@@ -33,7 +33,7 @@ const menuItems = [
     url: "/review-queue",
     icon: CheckSquare,
     testId: "link-review-queue",
-    requiresReputation: 500,
+    requiresReputation: 0,
   },
   {
     title: "Techniques",
