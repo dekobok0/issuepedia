@@ -314,6 +314,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/v1/prompts/:id/techniques', isAuthenticated, async (req: any, res) => {
+    try {
+      const { techniqueId } = req.body;
+      const link = await storage.linkPromptToTechnique(req.params.id, techniqueId);
+      res.status(201).json(link);
+    } catch (error: any) {
+      console.error("Error linking technique to prompt:", error);
+      res.status(400).json({ message: error.message || "Failed to link technique" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
