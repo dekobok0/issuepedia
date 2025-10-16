@@ -15,6 +15,7 @@ import {
   insertCommentSchema,
   insertPromptTechniqueSchema 
 } from "@shared/schema";
+import { z } from "zod";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
@@ -55,9 +56,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/v1/prompts', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      // Force pending_review status server-side for all new prompts
       const validatedData = insertPromptSchema.parse({
         ...req.body,
         authorId: userId,
+        status: 'pending_review', // Always set to pending_review regardless of client input
       });
       const prompt = await storage.createPrompt(validatedData);
       res.status(201).json(prompt);
@@ -316,12 +319,31 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.post('/api/v1/prompts/:id/techniques', isAuthenticated, async (req: any, res) => {
     try {
-      const { techniqueId } = req.body;
-      const link = await storage.linkPromptToTechnique(req.params.id, techniqueId);
+      const userId = req.user.claims.sub;
+      const promptId = req.params.id;
+      
+      // Validate request body
+      const bodySchema = z.object({
+        techniqueId: z.number().int().positive(),
+      });
+      const { techniqueId } = bodySchema.parse(req.body);
+      
+      // Check prompt exists and user owns it
+      const prompt = await storage.getPrompt(promptId);
+      if (!prompt) {
+        return res.status(404).json({ message: "Prompt not found" });
+      }
+      
+      if (prompt.authorId !== userId) {
+        return res.status(403).json({ message: "Unauthorized: You can only add techniques to your own prompts" });
+      }
+      
+      const link = await storage.linkPromptToTechnique(promptId, techniqueId);
       res.status(201).json(link);
     } catch (error: any) {
       console.error("Error linking technique to prompt:", error);
-      res.status(400).json({ message: error.message || "Failed to link technique" });
+      const statusCode = error.name === 'ZodError' ? 400 : 500;
+      res.status(statusCode).json({ message: error.message || "Failed to link technique" });
     }
   });
 
