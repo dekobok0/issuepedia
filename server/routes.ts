@@ -40,8 +40,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.get('/api/v1/prompts', async (req, res) => {
     try {
       const { status, authorId, limit, offset } = req.query;
+      // Default to 'approved' status if not specified
       const prompts = await storage.getPromptsWithTechniques({
-        status: status as string,
+        status: (status as string) || 'approved',
         authorId: authorId as string,
         limit: limit ? parseInt(limit as string) : undefined,
         offset: offset ? parseInt(offset as string) : undefined,

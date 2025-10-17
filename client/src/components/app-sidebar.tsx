@@ -1,4 +1,4 @@
-import { Home, Plus, User, Library, Award, CheckSquare } from "lucide-react";
+import { Home, Plus, User, Library, Award, CheckSquare, LogOut } from "lucide-react";
 import { Link, useLocation } from "wouter";
 import {
   Sidebar,
@@ -13,6 +13,14 @@ import {
   SidebarFooter,
 } from "@/components/ui/sidebar";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 
 const menuItems = [
@@ -97,22 +105,43 @@ export function AppSidebar() {
       </SidebarContent>
       <SidebarFooter className="border-t p-4">
         {user ? (
-          <Link to="/profile" className="flex items-center gap-3 hover-elevate rounded-lg p-2" data-testid="link-profile">
-            <Avatar className="h-8 w-8">
-              <AvatarImage src={user.profileImageUrl || undefined} />
-              <AvatarFallback>
-                {user.username?.substring(0, 2).toUpperCase()}
-              </AvatarFallback>
-            </Avatar>
-            <div className="flex-1 overflow-hidden">
-              <p className="text-sm font-medium truncate" data-testid="text-username">
-                {user.username}
-              </p>
-              <p className="text-xs text-muted-foreground" data-testid="text-reputation">
-                {user.reputation || 0} points
-              </p>
-            </div>
-          </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <button className="flex items-center gap-3 hover-elevate rounded-lg p-2 w-full text-left" data-testid="button-user-menu">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={user.profileImageUrl || undefined} />
+                  <AvatarFallback>
+                    {user.username?.substring(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="flex-1 overflow-hidden">
+                  <p className="text-sm font-medium truncate" data-testid="text-username">
+                    {user.username}
+                  </p>
+                  <p className="text-xs text-muted-foreground" data-testid="text-reputation">
+                    {user.reputation || 0} points
+                  </p>
+                </div>
+              </button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="w-56">
+              <DropdownMenuLabel>My Account</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <Link to="/profile" data-testid="link-profile">
+                  <User className="mr-2 h-4 w-4" />
+                  Profile
+                </Link>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem asChild>
+                <a href="/api/logout" className="w-full" data-testid="link-logout">
+                  <LogOut className="mr-2 h-4 w-4" />
+                  Logout
+                </a>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         ) : (
           <a
             href="/api/login"
