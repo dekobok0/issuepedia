@@ -333,3 +333,28 @@ export type PromptWithStats = PromptWithTechniques & {
   voteCount: number; 
   commentCount: number;
 };
+
+// Reputation thresholds for permissions (Stack Overflow style)
+export const REPUTATION_THRESHOLDS = {
+  UPVOTE: 15,
+  COMMENT: 50,
+  DOWNVOTE: 125,
+  REVIEW: 500,  // Existing requirement
+} as const;
+
+// Permission check helpers
+export function canUpvote(reputation: number): boolean {
+  return reputation >= REPUTATION_THRESHOLDS.UPVOTE;
+}
+
+export function canDownvote(reputation: number): boolean {
+  return reputation >= REPUTATION_THRESHOLDS.DOWNVOTE;
+}
+
+export function canComment(reputation: number): boolean {
+  return reputation >= REPUTATION_THRESHOLDS.COMMENT;
+}
+
+export function canReview(reputation: number): boolean {
+  return reputation >= REPUTATION_THRESHOLDS.REVIEW;
+}

@@ -14,6 +14,7 @@ import Techniques from "@/pages/techniques";
 import Leaderboard from "@/pages/leaderboard";
 import Profile from "@/pages/profile";
 import PromptDetail from "@/pages/prompt-detail";
+import UserProfile from "@/pages/user-profile";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -26,6 +27,7 @@ function Router() {
       <Route path="/leaderboard" component={Leaderboard} />
       <Route path="/profile" component={Profile} />
       <Route path="/prompts/:id" component={PromptDetail} />
+      <Route path="/users/:username" component={UserProfile} />
       <Route component={NotFound} />
     </Switch>
   );

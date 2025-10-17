@@ -12,6 +12,7 @@ import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { formatDistance } from "date-fns";
 import type { PromptWithTechniques, Comment } from "@shared/schema";
+import { canComment } from "@shared/schema";
 
 export default function PromptDetail() {
   const { id } = useParams();
@@ -51,6 +52,25 @@ export default function PromptDetail() {
   });
 
   const handleSubmitComment = () => {
+    if (!user) {
+      toast({
+        title: "Login required",
+        description: "Please log in to comment",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const userReputation = user.reputation || 0;
+    if (!canComment(userReputation)) {
+      toast({
+        title: "Insufficient reputation",
+        description: `You need 50 reputation to comment (you have ${userReputation})`,
+        variant: "destructive",
+      });
+      return;
+    }
+
     if (!commentText.trim()) {
       toast({
         title: "Empty comment",
@@ -154,22 +174,30 @@ export default function PromptDetail() {
         <CardContent className="space-y-4">
           {/* Comment Form */}
           {user ? (
-            <div className="space-y-2" data-testid="comment-form">
-              <Textarea
-                placeholder="Add a comment..."
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                disabled={commentMutation.isPending}
-                data-testid="input-comment"
-              />
-              <Button
-                onClick={handleSubmitComment}
-                disabled={commentMutation.isPending || !commentText.trim()}
-                data-testid="button-submit-comment"
-              >
-                {commentMutation.isPending ? "Posting..." : "Post Comment"}
-              </Button>
-            </div>
+            <>
+              {canComment(user.reputation || 0) ? (
+                <div className="space-y-2" data-testid="comment-form">
+                  <Textarea
+                    placeholder="Add a comment..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    disabled={commentMutation.isPending}
+                    data-testid="input-comment"
+                  />
+                  <Button
+                    onClick={handleSubmitComment}
+                    disabled={commentMutation.isPending || !commentText.trim()}
+                    data-testid="button-submit-comment"
+                  >
+                    {commentMutation.isPending ? "Posting..." : "Post Comment"}
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-sm text-muted-foreground" data-testid="text-reputation-required">
+                  You need 50 reputation to comment (you have {user.reputation || 0})
+                </p>
+              )}
+            </>
           ) : (
             <p className="text-sm text-muted-foreground" data-testid="text-login-prompt">
               Please log in to comment

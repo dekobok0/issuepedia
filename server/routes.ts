@@ -171,10 +171,33 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/v1/votes', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
       const validatedData = insertVoteSchema.parse({
         ...req.body,
         userId,
       });
+      
+      // Check reputation-based permissions
+      if (validatedData.voteType === 'upvote' && user.reputation < 15) {
+        return res.status(403).json({ 
+          message: "You need 15 reputation to upvote",
+          requiredReputation: 15,
+          currentReputation: user.reputation
+        });
+      }
+      
+      if (validatedData.voteType === 'downvote' && user.reputation < 125) {
+        return res.status(403).json({ 
+          message: "You need 125 reputation to downvote",
+          requiredReputation: 125,
+          currentReputation: user.reputation
+        });
+      }
       
       // Check for existing vote to handle vote changes
       const existingVote = await storage.getUserVoteForPrompt(userId, validatedData.promptId);
@@ -185,6 +208,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       await handlePromptVote(
         validatedData.promptId, 
         validatedData.voteType,
+        userId,
         existingVote?.voteType as 'upvote' | 'downvote' | undefined
       );
       
@@ -231,6 +255,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/v1/comments', isAuthenticated, async (req: any, res) => {
     try {
       const userId = req.user.claims.sub;
+      const user = await storage.getUser(userId);
+      
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+      
+      // Check reputation-based permission
+      if (user.reputation < 50) {
+        return res.status(403).json({ 
+          message: "You need 50 reputation to comment",
+          requiredReputation: 50,
+          currentReputation: user.reputation
+        });
+      }
+      
       const validatedData = insertCommentSchema.parse({
         ...req.body,
         authorId: userId,
@@ -288,6 +327,16 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error fetching user badges:", error);
       res.status(500).json({ message: "Failed to fetch badges" });
+    }
+  });
+
+  app.get('/api/v1/users/:id/reviews', async (req, res) => {
+    try {
+      const reviews = await storage.getReviewsByReviewerId(req.params.id);
+      res.json(reviews);
+    } catch (error) {
+      console.error("Error fetching user reviews:", error);
+      res.status(500).json({ message: "Failed to fetch reviews" });
     }
   });
 

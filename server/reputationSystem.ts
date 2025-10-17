@@ -43,6 +43,7 @@ const BADGE_CONDITIONS = {
 export async function handlePromptVote(
   promptId: string,
   voteType: 'upvote' | 'downvote',
+  voterId: string,
   previousVoteType?: 'upvote' | 'downvote'
 ) {
   const prompt = await storage.getPrompt(promptId);
@@ -50,7 +51,7 @@ export async function handlePromptVote(
 
   const authorId = prompt.authorId;
   
-  // Calculate reputation change
+  // Calculate reputation change for prompt author
   let changeAmount = 0;
   
   if (previousVoteType) {
@@ -75,6 +76,27 @@ export async function handlePromptVote(
       userId: authorId,
       eventType: `prompt_${voteType}d`,
       changeAmount,
+      relatedPromptId: promptId,
+    });
+  }
+
+  // Stack Overflow rule: Downvoter loses 1 reputation
+  if (voteType === 'downvote' && previousVoteType !== 'downvote') {
+    // Apply penalty when casting a downvote (new or changed from upvote)
+    await storage.updateUserReputation(voterId, -1);
+    await storage.createReputationEvent({
+      userId: voterId,
+      eventType: 'downvote_cast',
+      changeAmount: -1,
+      relatedPromptId: promptId,
+    });
+  } else if (previousVoteType === 'downvote' && voteType !== 'downvote') {
+    // Restore 1 reputation when removing downvote (change to upvote or remove vote)
+    await storage.updateUserReputation(voterId, 1);
+    await storage.createReputationEvent({
+      userId: voterId,
+      eventType: 'downvote_removed',
+      changeAmount: 1,
       relatedPromptId: promptId,
     });
   }

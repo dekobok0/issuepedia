@@ -52,6 +52,7 @@ export interface IStorage {
   // Review operations
   createReview(review: InsertReview): Promise<Review>;
   getReviewsByPromptId(promptId: string): Promise<Review[]>;
+  getReviewsByReviewerId(reviewerId: string): Promise<Review[]>;
   getReviewQueue(): Promise<Prompt[]>;
   
   // Vote operations
@@ -287,6 +288,10 @@ export class DatabaseStorage implements IStorage {
 
   async getReviewsByPromptId(promptId: string): Promise<Review[]> {
     return await db.select().from(reviews).where(eq(reviews.promptId, promptId));
+  }
+
+  async getReviewsByReviewerId(reviewerId: string): Promise<Review[]> {
+    return await db.select().from(reviews).where(eq(reviews.reviewerId, reviewerId)).orderBy(sql`${reviews.createdAt} DESC`);
   }
 
   async getReviewQueue(): Promise<Prompt[]> {

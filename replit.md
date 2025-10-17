@@ -77,13 +77,21 @@ Preferred communication style: Simple, everyday language.
 ### Gamification & Reputation System
 
 **Reputation Events**:
-- PROMPT_UPVOTED: +10 points
-- PROMPT_DOWNVOTED: -2 points  
+- PROMPT_UPVOTED: +10 points (to prompt author)
+- PROMPT_DOWNVOTED: -2 points (to prompt author)
+- DOWNVOTE_CAST: -1 point (to voter, Stack Overflow rule)
+- DOWNVOTE_REMOVED: +1 point (to voter, when removing downvote)
 - REVIEW_APPROVED: +15 points
 - REVIEW_REJECTED: -5 points
 - ACCURATE_REVIEW: +5 points (when review aligns with consensus)
 - FIRST_PROMPT_APPROVED: +50 points
 - COMMENT_UPVOTED: +2 points
+
+**Permission Thresholds (Stack Overflow-style)**:
+- 15 reputation: Upvote privilege
+- 50 reputation: Comment privilege
+- 125 reputation: Downvote privilege
+- 500 reputation: Review privilege
 
 **Badge System**: Condition-based achievement unlocking with badges for:
 - First Chain-of-Thought prompt approval
@@ -91,6 +99,12 @@ Preferred communication style: Simple, everyday language.
 - Custom badge definitions stored in database
 
 **Implementation**: Reputation changes trigger badge evaluation asynchronously, checking unlock conditions and awarding badges when criteria are met.
+
+**Permission System Implementation**:
+- Backend enforcement via middleware checking user reputation before allowing actions
+- API returns 403 Forbidden when user lacks required reputation
+- Frontend UI disables buttons and shows tooltips explaining required reputation
+- Helper functions (canUpvote, canComment, canDownvote) in shared/schema.ts for consistent permission checks
 
 ### Community Interaction Features
 
@@ -107,6 +121,13 @@ Preferred communication style: Simple, everyday language.
 - Comment display with author information and timestamps
 - Comment count aggregation in prompt listings
 - Full CRUD operations via storage layer
+
+**User Profile Pages**:
+- Public profile accessible at /users/:username
+- Displays user reputation score, join date, and badge collection
+- Shows submitted prompts with techniques and vote counts
+- Lists review history with vote type (approve/reject) and timestamps
+- Tab navigation between "Prompts" and "Reviews" sections
 
 **Data Architecture**:
 - `PromptWithStats` type extends base Prompt with voteCount and commentCount
