@@ -92,6 +92,28 @@ Preferred communication style: Simple, everyday language.
 
 **Implementation**: Reputation changes trigger badge evaluation asynchronously, checking unlock conditions and awarding badges when criteria are met.
 
+### Community Interaction Features
+
+**Voting System**: 
+- Upvote/downvote functionality for prompts
+- Vote count aggregation at storage layer for performance
+- User-specific vote tracking to prevent duplicate votes
+- Reputation rewards: +10 for upvotes, -2 for downvotes
+- VoteButtons reusable component with optimistic UI updates
+- Real-time cache invalidation via TanStack Query mutations
+
+**Commenting System**:
+- Comment posting on prompt detail pages (authenticated users only)
+- Comment display with author information and timestamps
+- Comment count aggregation in prompt listings
+- Full CRUD operations via storage layer
+
+**Data Architecture**:
+- `PromptWithStats` type extends base Prompt with voteCount and commentCount
+- `getPromptsWithTechniques()` returns aggregated statistics for listings
+- `getPromptWithTechniques()` returns detailed prompt with techniques for detail view
+- Default status filter ensures only approved prompts appear on homepage
+
 ## External Dependencies
 
 ### Authentication

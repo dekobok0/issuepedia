@@ -34,6 +34,7 @@ export default function PromptDetail() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/v1/prompts", id, "comments"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/v1/prompts"] });
       setCommentText("");
       toast({
         title: "Comment posted",
