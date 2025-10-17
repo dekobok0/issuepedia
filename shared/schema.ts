@@ -329,3 +329,7 @@ export type UserBadge = typeof userBadges.$inferSelect;
 
 // Extended types for joined queries
 export type PromptWithTechniques = Prompt & { techniques: PromptTechnique[] };
+export type PromptWithStats = PromptWithTechniques & { 
+  voteCount: number; 
+  commentCount: number;
+};

@@ -73,7 +73,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   app.get('/api/v1/prompts/:id', async (req, res) => {
     try {
-      const prompt = await storage.getPrompt(req.params.id);
+      const prompt = await storage.getPromptWithTechniques(req.params.id);
       if (!prompt) {
         return res.status(404).json({ message: "Prompt not found" });
       }
@@ -203,6 +203,27 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error deleting vote:", error);
       res.status(500).json({ message: "Failed to delete vote" });
+    }
+  });
+
+  app.get('/api/v1/prompts/:id/votes', async (req, res) => {
+    try {
+      const voteCount = await storage.getVoteCount(req.params.id);
+      res.json(voteCount);
+    } catch (error) {
+      console.error("Error fetching vote count:", error);
+      res.status(500).json({ message: "Failed to fetch vote count" });
+    }
+  });
+
+  app.get('/api/v1/prompts/:id/user-vote', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const userVote = await storage.getUserVoteForPrompt(userId, req.params.id);
+      res.json(userVote || null);
+    } catch (error) {
+      console.error("Error fetching user vote:", error);
+      res.status(500).json({ message: "Failed to fetch user vote" });
     }
   });
 

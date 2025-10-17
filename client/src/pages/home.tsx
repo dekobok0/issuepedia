@@ -3,13 +3,14 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { ArrowUp, ArrowDown, MessageSquare, Plus } from "lucide-react";
+import { MessageSquare, Plus } from "lucide-react";
 import { Link } from "wouter";
 import { useAuth } from "@/hooks/useAuth";
-import type { PromptWithTechniques } from "@shared/schema";
+import { VoteButtons } from "@/components/vote-buttons";
+import type { PromptWithStats } from "@shared/schema";
 
 export default function Home() {
-  const { data: prompts, isLoading } = useQuery<PromptWithTechniques[]>({
+  const { data: prompts, isLoading } = useQuery<PromptWithStats[]>({
     queryKey: ["/api/v1/prompts"],
   });
 
@@ -123,30 +124,10 @@ export default function Home() {
               </CardContent>
               <CardFooter className="flex items-center justify-between gap-4">
                 <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-1">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={!user}
-                      data-testid={`button-upvote-${prompt.id}`}
-                    >
-                      <ArrowUp className="h-4 w-4" />
-                    </Button>
-                    <span className="text-sm font-medium min-w-[2ch] text-center" data-testid={`text-vote-count-${prompt.id}`}>
-                      0
-                    </span>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      disabled={!user}
-                      data-testid={`button-downvote-${prompt.id}`}
-                    >
-                      <ArrowDown className="h-4 w-4" />
-                    </Button>
-                  </div>
+                  <VoteButtons promptId={prompt.id} />
                   <div className="flex items-center gap-2 text-sm text-muted-foreground">
                     <MessageSquare className="h-4 w-4" />
-                    <span data-testid={`text-comment-count-${prompt.id}`}>0</span>
+                    <span data-testid={`text-comment-count-${prompt.id}`}>{prompt.commentCount}</span>
                   </div>
                 </div>
                 <div className="text-sm text-muted-foreground" data-testid={`text-author-${prompt.id}`}>

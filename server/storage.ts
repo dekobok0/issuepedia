@@ -43,8 +43,9 @@ export interface IStorage {
   // Prompt operations
   createPrompt(prompt: InsertPrompt): Promise<Prompt>;
   getPrompt(id: string): Promise<Prompt | undefined>;
+  getPromptWithTechniques(id: string): Promise<(Prompt & { techniques: PromptTechnique[] }) | undefined>;
   getPrompts(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<Prompt[]>;
-  getPromptsWithTechniques(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<(Prompt & { techniques: PromptTechnique[] })[]>;
+  getPromptsWithTechniques(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<(Prompt & { techniques: PromptTechnique[]; voteCount: number; commentCount: number })[]>;
   updatePrompt(id: string, data: Partial<InsertPrompt>): Promise<Prompt | undefined>;
   forkPrompt(promptId: string, authorId: string): Promise<Prompt>;
   
@@ -58,6 +59,7 @@ export interface IStorage {
   getVotesByPromptId(promptId: string): Promise<Vote[]>;
   getUserVoteForPrompt(userId: string, promptId: string): Promise<Vote | undefined>;
   deleteVote(userId: string, promptId: string): Promise<void>;
+  getVoteCount(promptId: string): Promise<{ upvotes: number; downvotes: number; total: number }>;
   
   // Comment operations
   createComment(comment: InsertComment): Promise<Comment>;
@@ -134,6 +136,19 @@ export class DatabaseStorage implements IStorage {
     return prompt;
   }
 
+  async getPromptWithTechniques(id: string): Promise<(Prompt & { techniques: PromptTechnique[] }) | undefined> {
+    const prompt = await this.getPrompt(id);
+    if (!prompt) {
+      return undefined;
+    }
+
+    const techniques = await this.getPromptTechniques(id);
+    return {
+      ...prompt,
+      techniques,
+    };
+  }
+
   async getPrompts(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<Prompt[]> {
     let query = db.select().from(prompts);
     
@@ -161,7 +176,7 @@ export class DatabaseStorage implements IStorage {
     return await query;
   }
 
-  async getPromptsWithTechniques(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<(Prompt & { techniques: PromptTechnique[] })[]> {
+  async getPromptsWithTechniques(filters?: { status?: string; authorId?: string; limit?: number; offset?: number }): Promise<(Prompt & { techniques: PromptTechnique[]; voteCount: number; commentCount: number })[]> {
     // First, get the filtered prompts
     const filteredPrompts = await this.getPrompts(filters);
     
@@ -182,6 +197,23 @@ export class DatabaseStorage implements IStorage {
       .innerJoin(promptTechniques, eq(promptTechniqueLinks.techniqueId, promptTechniques.id))
       .where(inArray(promptTechniqueLinks.promptId, promptIds));
     
+    // Get vote counts for these prompts
+    const votesData = await db
+      .select({
+        promptId: votes.promptId,
+        voteType: votes.voteType,
+      })
+      .from(votes)
+      .where(inArray(votes.promptId, promptIds));
+    
+    // Get comment counts for these prompts
+    const commentsData = await db
+      .select({
+        promptId: comments.promptId,
+      })
+      .from(comments)
+      .where(inArray(comments.promptId, promptIds));
+    
     // Group techniques by prompt
     const techniquesByPrompt = new Map<string, PromptTechnique[]>();
     for (const { promptId, technique } of techniquesData) {
@@ -191,10 +223,25 @@ export class DatabaseStorage implements IStorage {
       techniquesByPrompt.get(promptId)!.push(technique);
     }
     
-    // Combine prompts with their techniques
+    // Calculate vote counts by prompt
+    const voteCountsByPrompt = new Map<string, number>();
+    for (const { promptId, voteType } of votesData) {
+      const current = voteCountsByPrompt.get(promptId) || 0;
+      voteCountsByPrompt.set(promptId, current + (voteType === 'upvote' ? 1 : -1));
+    }
+    
+    // Calculate comment counts by prompt
+    const commentCountsByPrompt = new Map<string, number>();
+    for (const { promptId } of commentsData) {
+      commentCountsByPrompt.set(promptId, (commentCountsByPrompt.get(promptId) || 0) + 1);
+    }
+    
+    // Combine prompts with their techniques, vote counts, and comment counts
     return filteredPrompts.map(prompt => ({
       ...prompt,
       techniques: techniquesByPrompt.get(prompt.id) || [],
+      voteCount: voteCountsByPrompt.get(prompt.id) || 0,
+      commentCount: commentCountsByPrompt.get(prompt.id) || 0,
     }));
   }
 
@@ -281,6 +328,17 @@ export class DatabaseStorage implements IStorage {
     await db
       .delete(votes)
       .where(and(eq(votes.userId, userId), eq(votes.promptId, promptId)));
+  }
+
+  async getVoteCount(promptId: string): Promise<{ upvotes: number; downvotes: number; total: number }> {
+    const allVotes = await this.getVotesByPromptId(promptId);
+    const upvotes = allVotes.filter(v => v.voteType === 'upvote').length;
+    const downvotes = allVotes.filter(v => v.voteType === 'downvote').length;
+    return {
+      upvotes,
+      downvotes,
+      total: upvotes - downvotes,
+    };
   }
 
   // Comment operations
