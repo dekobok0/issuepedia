@@ -6,6 +6,30 @@ Issuepedia is a developer-focused knowledge platform for collaborative prompt en
 
 The application features a visual prompt composer alongside text-based editing, peer review workflows with approval/rejection mechanisms, and a comprehensive reputation system that encourages high-quality submissions and accurate reviews.
 
+## Recent Changes (October 18, 2025)
+
+### Fork Functionality Implementation
+- **Fork Feature**: Implemented Stack Overflow-style fork functionality allowing users to create improved versions of existing prompts while maintaining attribution
+  - Added POST /api/v1/prompts/:id/fork API endpoint for creating prompt forks
+  - Forked prompts inherit techniques from original prompt automatically
+  - Forks created with status='draft', redirected to edit page for customization
+  - parentPromptId field tracks attribution chain
+  
+- **Technique Management in Edit Mode**: Added comprehensive technique editing capabilities
+  - Implemented DELETE /api/v1/prompts/:id/techniques/:techniqueId endpoint for removing technique links
+  - Edit page now supports adding and removing techniques from forked prompts
+  - Technique changes properly synchronized on save
+  
+- **Fork Gamification Rewards**: Extended reputation system for fork attribution bonuses
+  - Original authors receive +5 reputation when their prompt is forked and the fork gets approved
+  - Implemented in reputationSystem.handleReviewSubmission by checking parentPromptId
+  - Encourages high-quality original content that inspires derivative works
+
+### Technical Implementation Details
+- `forkPrompt()` storage method copies prompt data and technique links to new draft prompt
+- Edit page (/prompts/:id/edit) manages technique state with add/remove diff logic
+- All changes verified through end-to-end Playwright testing
+
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
@@ -37,6 +61,9 @@ Preferred communication style: Simple, everyday language.
 
 **API Design**: RESTful API with routes prefixed `/api/v1/` for versioning. Key endpoints include:
 - `/api/v1/prompts` - CRUD operations for prompts
+- `/api/v1/prompts/:id/fork` - Fork existing prompts with technique inheritance
+- `/api/v1/prompts/:id/techniques` - Add techniques to prompts (POST)
+- `/api/v1/prompts/:id/techniques/:techniqueId` - Remove techniques from prompts (DELETE)
 - `/api/v1/reviews` - Review submission and management
 - `/api/v1/votes` - Upvote/downvote system
 - `/api/v1/comments` - Commenting functionality
@@ -86,6 +113,7 @@ Preferred communication style: Simple, everyday language.
 - ACCURATE_REVIEW: +5 points (when review aligns with consensus)
 - FIRST_PROMPT_APPROVED: +50 points
 - COMMENT_UPVOTED: +2 points
+- FORK_APPROVED: +5 points (to original author when their prompt is forked and the fork gets approved)
 
 **Permission Thresholds (Stack Overflow-style)**:
 - 15 reputation: Upvote privilege
