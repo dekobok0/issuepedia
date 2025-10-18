@@ -275,6 +275,17 @@ export class DatabaseStorage implements IStorage {
         status: 'draft',
       })
       .returning();
+    
+    // Copy technique links from original prompt to forked prompt
+    const originalTechniques = await this.getPromptTechniques(promptId);
+    if (originalTechniques.length > 0) {
+      await Promise.all(
+        originalTechniques.map(technique => 
+          this.linkPromptToTechnique(forked.id, technique.id)
+        )
+      );
+    }
+    
     return forked;
   }
 
