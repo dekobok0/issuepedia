@@ -419,6 +419,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.delete('/api/v1/prompts/:id/techniques/:techniqueId', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const promptId = req.params.id;
+      const techniqueId = parseInt(req.params.techniqueId);
+      
+      // Check prompt exists and user owns it
+      const prompt = await storage.getPrompt(promptId);
+      if (!prompt) {
+        return res.status(404).json({ message: "Prompt not found" });
+      }
+      
+      if (prompt.authorId !== userId) {
+        return res.status(403).json({ message: "Unauthorized: You can only remove techniques from your own prompts" });
+      }
+      
+      await storage.unlinkPromptFromTechnique(promptId, techniqueId);
+      res.status(204).send();
+    } catch (error: any) {
+      console.error("Error unlinking technique from prompt:", error);
+      res.status(500).json({ message: error.message || "Failed to unlink technique" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

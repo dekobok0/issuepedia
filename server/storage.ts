@@ -81,6 +81,7 @@ export interface IStorage {
   getTechniques(): Promise<PromptTechnique[]>;
   getTechniqueTree(): Promise<PromptTechnique[]>;
   linkPromptToTechnique(promptId: string, techniqueId: number): Promise<PromptTechniqueLink>;
+  unlinkPromptFromTechnique(promptId: string, techniqueId: number): Promise<void>;
   getPromptTechniques(promptId: string): Promise<PromptTechnique[]>;
 }
 
@@ -445,6 +446,17 @@ export class DatabaseStorage implements IStorage {
       .onConflictDoNothing()
       .returning();
     return link;
+  }
+
+  async unlinkPromptFromTechnique(promptId: string, techniqueId: number): Promise<void> {
+    await db
+      .delete(promptTechniqueLinks)
+      .where(
+        and(
+          eq(promptTechniqueLinks.promptId, promptId),
+          eq(promptTechniqueLinks.techniqueId, techniqueId)
+        )
+      );
   }
 
   async getPromptTechniques(promptId: string): Promise<PromptTechnique[]> {

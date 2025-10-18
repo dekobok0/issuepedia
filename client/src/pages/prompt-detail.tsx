@@ -1,4 +1,4 @@
-import { useParams } from "wouter";
+import { useParams, useLocation } from "wouter";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -11,11 +11,13 @@ import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useState } from "react";
 import { formatDistance } from "date-fns";
+import { GitFork } from "lucide-react";
 import type { PromptWithTechniques, Comment } from "@shared/schema";
 import { canComment } from "@shared/schema";
 
 export default function PromptDetail() {
   const { id } = useParams();
+  const [, navigate] = useLocation();
   const { user } = useAuth();
   const { toast } = useToast();
   const [commentText, setCommentText] = useState("");
@@ -26,6 +28,27 @@ export default function PromptDetail() {
 
   const { data: comments, isLoading: commentsLoading } = useQuery<Comment[]>({
     queryKey: ["/api/v1/prompts", id, "comments"],
+  });
+
+  const forkMutation = useMutation({
+    mutationFn: async () => {
+      const response = await apiRequest("POST", `/api/v1/prompts/${id}/fork`, {});
+      return await response.json();
+    },
+    onSuccess: (forkedPrompt: any) => {
+      toast({
+        title: "Prompt forked!",
+        description: "You can now edit your forked version",
+      });
+      navigate(`/prompts/${forkedPrompt.id}/edit`);
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to fork prompt",
+        description: error.message || "Something went wrong",
+        variant: "destructive",
+      });
+    },
   });
 
   const commentMutation = useMutation({
@@ -158,10 +181,24 @@ export default function PromptDetail() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="flex items-center justify-between gap-4">
+        <CardFooter className="flex items-center justify-between gap-4 flex-wrap">
           <VoteButtons promptId={prompt.id} />
-          <div className="text-sm text-muted-foreground" data-testid="text-author">
-            by {prompt.authorId}
+          <div className="flex items-center gap-3">
+            {user && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => forkMutation.mutate()}
+                disabled={forkMutation.isPending}
+                data-testid="button-fork"
+              >
+                <GitFork className="h-4 w-4 mr-2" />
+                {forkMutation.isPending ? "Forking..." : "Fork"}
+              </Button>
+            )}
+            <div className="text-sm text-muted-foreground" data-testid="text-author">
+              by {prompt.authorId}
+            </div>
           </div>
         </CardFooter>
       </Card>

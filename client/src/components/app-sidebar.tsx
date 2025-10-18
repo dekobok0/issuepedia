@@ -128,7 +128,7 @@ export function AppSidebar() {
               <DropdownMenuLabel>My Account</DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuItem asChild>
-                <Link to="/profile" data-testid="link-profile">
+                <Link to={`/users/${user.username}`} data-testid="link-profile">
                   <User className="mr-2 h-4 w-4" />
                   Profile
                 </Link>

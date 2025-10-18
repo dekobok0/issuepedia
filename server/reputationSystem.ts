@@ -141,6 +141,21 @@ export async function handleReviewSubmission(
         relatedPromptId: promptId,
       });
     }
+    
+    // If this is a forked prompt, reward the original author
+    if (prompt.parentPromptId) {
+      const parentPrompt = await storage.getPrompt(prompt.parentPromptId);
+      if (parentPrompt) {
+        const FORK_BONUS = 5;
+        await storage.updateUserReputation(parentPrompt.authorId, FORK_BONUS);
+        await storage.createReputationEvent({
+          userId: parentPrompt.authorId,
+          eventType: 'fork_approved',
+          changeAmount: FORK_BONUS,
+          relatedPromptId: promptId,
+        });
+      }
+    }
   }
   
   // Check for badge triggers
